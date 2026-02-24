@@ -1,4 +1,4 @@
-// 1. ІНІЦІАЛІЗАЦІЯ БАЗИ ДАНИХ FIREBASE
+// 1. ІНІЦІАЛІЗАЦІЯ FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDI0MJrR_BNuvVWR8Imz4orlymbVKXkqF0",
     authDomain: "techfix-base.firebaseapp.com",
@@ -7,143 +7,141 @@ const firebaseConfig = {
     storageBucket: "techfix-base.firebasestorage.app",
     messagingSenderId: "451050923808",
     appId: "1:451050923808:web:8271809979968b2a1f9945"
-  };
+};
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 2. СИНХРОНІЗАЦІЯ В РЕАЛЬНОМУ ЧАСІ (Акції та Відгуки)
+// --- 2. ФУНКЦІЇ ДЛЯ КЛІЄНТА (index.html) ---
+
 function syncSiteData() {
-    // Слухаємо зміни в Акціях
-    db.ref('promo').on('value', (snapshot) => {
-        const promoData = snapshot.val();
-        if (promoData) {
-            const promoP = document.querySelector('#promo p');
-            const promoBtn = document.querySelector('#promo .promo-code');
-            if (promoP) promoP.innerText = promoData.text;
-            if (promoBtn) promoBtn.innerText = "Промокод: " + promoData.code;
+    // Оновлення акцій
+    db.ref('promo').on('value', (snap) => {
+        const data = snap.val();
+        if (data) {
+            const p = document.querySelector('#promo p');
+            const code = document.querySelector('#promo .promo-code');
+            if (p) p.innerText = data.text;
+            if (code) code.innerText = "Промокод: " + data.code;
         }
     });
 
-    // Слухаємо зміни у Відгуках
-    db.ref('reviews').on('value', (snapshot) => {
-        const reviewsData = snapshot.val();
-        const reviewsContainer = document.getElementById('reviews-container');
-        if (reviewsData && reviewsContainer) {
-            reviewsContainer.innerHTML = ''; 
-            // Перетворюємо дані з бази у зручний список
-            const reviewsArray = Object.values(reviewsData).reverse(); 
-            
-            reviewsArray.forEach(rev => {
-                const div = document.createElement('div');
-                div.className = 'review-card';
-                div.style.marginBottom = "20px";
-                div.style.padding = "15px";
-                div.style.background = "var(--bg-card)";
-                div.style.borderRadius = "8px";
-                div.innerHTML = `<strong>${rev.name}</strong><p>${rev.text}</p>`;
-                reviewsContainer.appendChild(div);
+    // Оновлення відгуків
+    db.ref('reviews').on('value', (snap) => {
+        const container = document.getElementById('reviews-container');
+        if (container) {
+            container.innerHTML = '';
+            const data = snap.val() || {};
+            Object.values(data).reverse().forEach(rev => {
+                container.innerHTML += `<div class="review-card"><strong>${rev.name}</strong><p>${rev.text}</p></div>`;
             });
         }
     });
 }
 
-// 3. ПЕРЕВІРКА СТАТУСУ (Звертається до хмари)
 function checkStatus() {
-    const inputEl = document.getElementById("orderInput");
-    const resultArea = document.getElementById("result-area");
-    if (!inputEl || !resultArea) return;
+    const id = document.getElementById("orderInput")?.value.trim();
+    if (!id) return alert("Введіть номер!");
+    
+    db.ref('orders/' + id).once('value').then(snap => {
+        const res = document.getElementById("result-area");
+        if (snap.exists()) {
+            const o = snap.val();
+            res.style.display = "block";
+            document.getElementById("status-badge").innerText = o.status;
+            document.getElementById("status-badge").className = "status-badge st-" + o.type;
+            document.getElementById("device-name").innerText = o.device;
+            document.getElementById("price-val").innerText = o.price;
+            document.getElementById("master-note").innerText = o.note || "Немає";
+        } else { alert("Не знайдено!"); }
+    });
+}
 
-    const input = inputEl.value.trim();
-    if (!input) return alert("Введіть номер квитанції!");
+// --- 3. УСІ ФУНКЦІЇ АДМІНКИ (admin.html) ---
 
-    resultArea.style.display = "block";
+function login() {
+    if (document.getElementById('pass').value === 'admin') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        loadAdminData();
+    } else alert('Помилка!');
+}
 
-    // Шукаємо замовлення в базі Firebase
-    db.ref('orders/' + input).once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            const order = snapshot.val();
-            const badge = document.getElementById("status-badge");
-            badge.innerText = order.status;
-            badge.className = "status-badge st-" + order.type;
-            
-            document.getElementById("device-name").innerText = order.device;
-            document.getElementById("price-val").innerText = order.price || "—";
-            document.getElementById("master-note").innerText = order.note || "Немає коментарів";
+// Замовлення
+function saveOrder() {
+    const id = document.getElementById('order-id').value;
+    const statusEl = document.getElementById('order-status');
+    db.ref('orders/' + id).set({
+        device: document.getElementById('order-device').value,
+        price: document.getElementById('order-price').value,
+        type: statusEl.value,
+        status: statusEl.options[statusEl.selectedIndex].text,
+        note: document.getElementById('order-note')?.value || ""
+    });
+    alert("Замовлення збережено!");
+}
 
-            const colors = { done: "var(--success)", work: "var(--accent)", wait: "var(--danger)" };
-            resultArea.style.borderLeft = `5px solid ${colors[order.type]}`;
-        } else {
-            document.getElementById("status-badge").innerText = "Не знайдено";
-            document.getElementById("status-badge").style.background = "#555";
-            document.getElementById("device-name").innerText = "Замовлення не існує";
-            document.getElementById("price-val").innerText = "-";
-            document.getElementById("master-note").innerText = "Перевірте номер.";
-            resultArea.style.borderLeft = "5px solid #555";
+function delOrder(id) {
+    if(confirm('Видалити замовлення?')) db.ref('orders/' + id).remove();
+}
+
+// Акції
+function savePromo() {
+    db.ref('promo').set({
+        text: document.getElementById('promo-text').value,
+        code: document.getElementById('promo-code').value
+    });
+    alert("Акцію оновлено!");
+}
+
+// Відгуки
+function addReview() {
+    const name = document.getElementById('rev-name').value;
+    const text = document.getElementById('rev-text').value;
+    if(name && text) db.ref('reviews').push({ name, text });
+}
+
+function delReview(id) {
+    db.ref('reviews/' + id).remove();
+}
+
+// Завантаження даних в адмінку
+function loadAdminData() {
+    // Таблиця замовлень
+    db.ref('orders').on('value', snap => {
+        const tbody = document.getElementById('orders-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const orders = snap.val() || {};
+        for(let id in orders) {
+            tbody.innerHTML += `<tr><td>${id}</td><td>${orders[id].device}</td><td>${orders[id].status}</td>
+            <td><button onclick="delOrder('${id}')">🗑️</button></td></tr>`;
+        }
+    });
+
+    // Список відгуків для видалення
+    db.ref('reviews').on('value', snap => {
+        const list = document.getElementById('reviews-list');
+        if (!list) return;
+        list.innerHTML = '';
+        const revs = snap.val() || {};
+        for(let id in revs) {
+            list.innerHTML += `<div class="item-card">${revs[id].name} <button onclick="delReview('${id}')">🗑️</button></div>`;
         }
     });
 }
 
-// Навігація та Тема (Без змін)
-function navigateTo(targetId) {
-    const homeContent = document.getElementById('home-content');
-    const statusSection = document.getElementById('check-status');
-    if (targetId === 'check-status') {
-        if(homeContent) homeContent.style.display = 'none';
-        if(statusSection) { statusSection.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    } else {
-        if(statusSection) statusSection.style.display = 'none';
-        if(homeContent) homeContent.style.display = 'block';
-        if (targetId === 'home') { window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-            const section = document.getElementById(targetId);
-            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-}
-function handleEnter(e) { if (e.key === 'Enter') checkStatus(); }
-
-function initTheme() {
-    const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
-    const currentTheme = localStorage.getItem('theme');
-    if (currentTheme) {
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        if (currentTheme === 'dark' && toggleSwitch) toggleSwitch.checked = true;
-    }
-    if (toggleSwitch) {
-        toggleSwitch.addEventListener('change', function(e) {
-            const theme = e.target.checked ? 'dark' : 'light';
+// Тема та ініціалізація
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('promo')) syncSiteData();
+    
+    // Перемикач теми
+    const themeBtn = document.querySelector('.theme-switch input');
+    if (themeBtn) {
+        themeBtn.addEventListener('change', () => {
+            const theme = themeBtn.checked ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
         });
     }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    syncSiteData();
 });
-// Перевірка: якщо ми на сторінці адміна
-if (document.getElementById('orders-tbody')) {
-    // Слухаємо базу і малюємо таблицю
-    db.ref('orders').on('value', snap => {
-        const orders = snap.val() || {};
-        const tbody = document.getElementById('orders-tbody');
-        tbody.innerHTML = '';
-        for(let id in orders) {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${id}</td>
-                    <td>${orders[id].device}</td>
-                    <td><button onclick="delOrder('${id}')">🗑️ Видалити</button></td>
-                </tr>`;
-        }
-    });
-}
-function delOrder(id) {
-    if(confirm('Видалити?')) {
-        firebase.database().ref('orders/' + id).remove();
-    }
-}
