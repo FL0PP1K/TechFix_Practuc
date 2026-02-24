@@ -125,3 +125,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     syncSiteData();
 });
+// Перевірка: якщо ми на сторінці адміна
+if (document.getElementById('orders-tbody')) {
+    // Слухаємо базу і малюємо таблицю
+    db.ref('orders').on('value', snap => {
+        const orders = snap.val() || {};
+        const tbody = document.getElementById('orders-tbody');
+        tbody.innerHTML = '';
+        for(let id in orders) {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${id}</td>
+                    <td>${orders[id].device}</td>
+                    <td><button onclick="delOrder('${id}')">🗑️ Видалити</button></td>
+                </tr>`;
+        }
+    });
+}
+function delOrder(id) {
+    if(confirm('Видалити?')) {
+        firebase.database().ref('orders/' + id).remove();
+    }
+}
