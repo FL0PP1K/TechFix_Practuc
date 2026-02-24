@@ -338,7 +338,7 @@ form input, form textarea {
     padding: 15px;
     margin-bottom: 20px;
     background: var(--bg-body);
-    border: 2px solid transparent;
+    border: none !important;
     border-radius: 8px;
     font-size: 15px;
     color: var(--text-main);
@@ -358,7 +358,7 @@ form input:focus, form textarea:focus {
 [data-theme="dark"] input, [data-theme="dark"] textarea {
     background-color: #2d2d2d;
     color: #fff;
-    border: 1px solid #555;
+    border: none !important;
 }
 
 form button {
@@ -435,3 +435,4 @@ footer {
     .theme-switch-wrapper { margin-left: 20px; border-left: none; }
 
 }
+
