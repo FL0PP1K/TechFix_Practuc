@@ -435,4 +435,8 @@ footer {
     .theme-switch-wrapper { margin-left: 20px; border-left: none; }
 
 }
+/* Коли активована темна тема, логотип змінить колір */
+[data-theme="dark"] .logo img {
+    filter: brightness(0) invert(1); 
+}
 
