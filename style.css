@@ -1,6 +1,7 @@
 html {
     scroll-behavior: smooth;
 }
+
 :root {
     /* --- Змінні кольорів --- */
     --primary: #007bff;
@@ -36,12 +37,12 @@ body {
     transition: background-color 0.3s, color 0.3s;
 }
 
-/* --- ЗАГАЛЬНІ ЕЛЕМЕНТИ --- */
-.service-card, .review, .contact-info, form {
+/* --- ЗАГАЛЬНІ ЕЛЕМЕНТИ (Без рамок) --- */
+.service-card, .review, .contact-info, form, .status-box {
     background: var(--bg-card);
     color: var(--text-main);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* М'якша тінь */
+    border: none !important; /* ПРИБРАНО РАМКИ */
 }
 
 section {
@@ -93,12 +94,25 @@ header {
     padding: 15px;
 }
 
+/* ЛОГОТИП */
 .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 24px;
     font-weight: bold;
     color: var(--primary);
     text-decoration: none;
     text-transform: uppercase;
+}
+
+.logo img {
+    height: 40px;
+    width: auto;
+    transition: filter 0.3s ease;
+}
+[data-theme="dark"] .logo img {
+    filter: brightness(0); 
 }
 
 nav {
@@ -129,11 +143,8 @@ nav a:hover {
 
 /* --- СТАТУС ЗАМОВЛЕННЯ --- */
 .status-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
     padding: 40px;
     border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
     text-align: center;
     max-width: 600px;
     margin: 0 auto;
@@ -149,12 +160,18 @@ nav a:hover {
 
 .input-group input {
     padding: 12px;
-    border: 1px solid #ccc;
+    border: none !important; /* ПРИБРАНО РАМКУ */
     border-radius: 4px;
     width: 60%;
     font-size: 16px;
     background: var(--bg-body);
     color: var(--text-main);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.input-group input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
 }
 
 .input-group button {
@@ -179,7 +196,7 @@ nav a:hover {
     background: var(--bg-body);
     padding: 20px;
     border-radius: 5px;
-    border-left: 5px solid #ccc;
+    border-left: 5px solid var(--primary);
     color: var(--text-main);
 }
 
@@ -213,8 +230,7 @@ nav a:hover {
 
 .service-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    border-color: var(--primary);
+    box-shadow: 0 10px 20px rgba(0,123,255,0.15);
 }
 
 .service-icon {
@@ -224,47 +240,24 @@ nav a:hover {
 }
 
 #hero-wrapper {
-    /* Шлях до картинки. Переконайтеся, що файл bg-service.jpg існує поруч з css */
     background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('bg-service.jpg');
     background-size: cover;
     background-position: center;
-    
-    /* Паралакс-ефект (фон стоїть на місці при прокрутці) */
     background-attachment: fixed;
-
-    /* Колір тексту всередині цього блоку - білий */
     color: #f8f9fa;
-    
-    /* Внутрішні відступи, щоб текст не прилипав до країв фото */
     padding: 60px 0;
-    
-    /* Відступ знизу до блоку "Акції" */
     margin-bottom: 50px;
 }
 
-/* Робимо заголовки H2 всередині цього блоку жовтими */
-#hero-wrapper h2 {
-    color: var(--accent);
-}
-#hero-wrapper h2::after {
-    background: var(--accent); /* Жовта лінія під заголовком */
-}
-
-/* Оскільки картки послуг білі, текст в них має лишитися темним */
-.service-card {
-    color: var(--text-main);
-}
-
-/* Трохи зменшимо відступи між секціями всередині цього блоку */
-#hero-wrapper section {
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
+#hero-wrapper h2 { color: var(--accent); }
+#hero-wrapper h2::after { background: var(--accent); }
+.service-card { color: var(--text-main); }
+#hero-wrapper section { margin-top: 30px; margin-bottom: 30px; }
 
 /* --- АКЦІЇ --- */
 #promo {
     background: #fff3cd;
-    border: 1px solid #ffeeba;
+    border: none; /* ПРИБРАНО РАМКУ */
     color: #856404;
     padding: 40px;
     text-align: center;
@@ -287,7 +280,6 @@ nav a:hover {
 
 [data-theme="dark"] #promo {
     background: #2d2d2d;
-    border: 1px solid var(--accent);
     color: var(--accent);
 }
 
@@ -300,7 +292,7 @@ nav a:hover {
 .review {
     padding: 20px;
     margin-bottom: 15px;
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid var(--primary) !important; 
     border-radius: 4px;
 }
 .review strong {
@@ -317,7 +309,8 @@ nav a:hover {
     background: var(--bg-card);
     padding: 40px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: none !important; /* ПРИБРАНО РАМКУ */
 }
 .contact-container h3 {
     margin-top: 0;
@@ -337,6 +330,7 @@ form input, form textarea {
     padding: 15px;
     margin-bottom: 20px;
     background: var(--bg-body);
+    border: none !important; /* ПРИБРАНО РАМКУ */
     border-radius: 8px;
     font-size: 15px;
     color: var(--text-main);
@@ -348,11 +342,9 @@ form input, form textarea {
 form input:focus, form textarea:focus {
     outline: none;
     background: var(--bg-card);
-    border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+    box-shadow: 0 0 0 2px var(--primary);
 }
 
-/* Темна тема для інпутів */
 [data-theme="dark"] input, [data-theme="dark"] textarea {
     background-color: #2d2d2d;
     color: #fff;
@@ -376,6 +368,7 @@ form button:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
 }
+
 /* --- ПЕРЕМИКАЧ ТЕМИ --- */
 .theme-switch-wrapper {
     display: flex;
@@ -431,10 +424,4 @@ footer {
     .input-group input { width: 100%; margin-bottom: 10px; }
     .input-group button { width: 100%; }
     .theme-switch-wrapper { margin-left: 20px; border-left: none; }
-
 }
-
-
-
-
-
