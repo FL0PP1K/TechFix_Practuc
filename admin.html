@@ -6,7 +6,7 @@
     <title>TechFix | Панель керування</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.webp">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --success: #22c55e; --danger: #ef4444; --text: #f8fafc; }
         body { background-color: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
@@ -30,7 +30,6 @@
     </style>
 </head>
 <body>
-
     <div id="login-screen">
         <h2>🔑 Вхід</h2>
         <input type="password" id="pass" placeholder="Пароль">
@@ -43,13 +42,11 @@
             <h1>🛠️ Адмін-панель</h1>
             <button onclick="location.reload()">Вийти</button>
         </div>
-
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('orders')">📦 Замовлення</button>
             <button class="tab-btn" onclick="showTab('promo')">🎁 Акції</button>
             <button class="tab-btn" onclick="showTab('reviews')">💬 Відгуки</button>
         </div>
-
         <div id="orders" class="content-section active">
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                 <input type="text" id="order-id" placeholder="№ Квитанції">
@@ -68,13 +65,11 @@
                 <tbody id="orders-tbody"></tbody>
             </table>
         </div>
-
         <div id="promo" class="content-section">
             <textarea id="promo-text" rows="3" placeholder="Текст акції..."></textarea>
             <input type="text" id="promo-code" placeholder="Промокод">
             <button class="btn-save" onclick="savePromo()">Оновити акцію</button>
         </div>
-
         <div id="reviews" class="content-section">
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <input type="text" id="rev-name" placeholder="Ім'я" style="flex: 1;">
@@ -84,7 +79,6 @@
             <div id="reviews-list"></div>
         </div>
     </div>
-
     <script>
     const firebaseConfig = {
         apiKey: "AIzaSyDI0MJrR_BNuvVWR8Imz4orlymbVKXkqF0",
@@ -97,7 +91,6 @@
       };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         function login() {
             if (document.getElementById('pass').value === 'Admin1234') {
                 document.getElementById('login-screen').style.display = 'none';
@@ -105,22 +98,18 @@
                 loadRealtimeData();
             } else { alert('Невірний пароль!'); }
         }
-
         function showTab(tabId) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
         }
-
         // --- РОБОТА З FIREBASE ---
-        
         // 1. ЗАМОВЛЕННЯ
         function saveOrder() {
             const id = document.getElementById('order-id').value;
             if(!id) return alert("Введіть ID!");
             const select = document.getElementById('order-status');
-            
             db.ref('orders/' + id).set({
                 device: document.getElementById('order-device').value,
                 price: document.getElementById('order-price').value,
@@ -128,17 +117,14 @@
                 status: select.options[select.selectedIndex].text,
                 note: document.getElementById('order-note').value
             });
-            
             // Очищення полів
             document.getElementById('order-id').value = '';
             document.getElementById('order-device').value = '';
             document.getElementById('order-note').value = '';
         }
-
         function delOrder(id) {
             if(confirm('Видалити замовлення ' + id + '?')) db.ref('orders/' + id).remove();
         }
-
         function editOrder(id) {
             db.ref('orders/' + id).once('value').then(snap => {
                 const order = snap.val();
@@ -149,7 +135,6 @@
                 document.getElementById('order-note').value = order.note;
             });
         }
-
         // 2. АКЦІЇ
         function savePromo() {
             db.ref('promo').set({
@@ -158,24 +143,19 @@
             });
             alert("Акцію на сайті оновлено!");
         }
-
         // 3. ВІДГУКИ
         function addReview() {
             const name = document.getElementById('rev-name').value;
             const text = document.getElementById('rev-text').value;
             if(!name || !text) return;
-            
             // push() створює унікальний ID для кожного відгуку
             db.ref('reviews').push({ name: name, text: text });
-            
             document.getElementById('rev-name').value = '';
             document.getElementById('rev-text').value = '';
         }
-
         function delReview(id) {
             db.ref('reviews/' + id).remove();
         }
-
         // --- ЗАВАНТАЖЕННЯ ДАНИХ (В РЕАЛЬНОМУ ЧАСІ) ---
         function loadRealtimeData() {
             // Слухаємо Замовлення
@@ -192,7 +172,6 @@
                         </td></tr>`;
                 }
             });
-
             // Слухаємо Акції
             db.ref('promo').on('value', snap => {
                 const promo = snap.val();
@@ -201,7 +180,6 @@
                     document.getElementById('promo-code').value = promo.code;
                 }
             });
-
             // Слухаємо Відгуки
             db.ref('reviews').on('value', snap => {
                 const reviews = snap.val() || {};
@@ -218,6 +196,3 @@
     </script>
 </body>
 </html>
-
-
-
