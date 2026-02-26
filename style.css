@@ -421,5 +421,22 @@ footer {
     .input-group input { width: 100%; margin-bottom: 10px; }
     .input-group button { width: 100%; }
     .theme-switch-wrapper { margin-left: 20px; border-left: none; }
+
+    #promo {
+        padding: 20px 15px; /* Зменшуємо внутрішні відступи */
+        margin-bottom: 30px;
+    }
+    #promo h2 {
+        font-size: 1.5em; /* Трохи зменшуємо заголовок */
+        margin-bottom: 20px;
+    }
+    .promo-code {
+        display: block; /* Кнопка з кодом стане на всю ширину */
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1em;
+        padding: 12px;
+    }
 }
+
 
