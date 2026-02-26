@@ -8,12 +8,10 @@ const firebaseConfig = {
     messagingSenderId: "451050923808",
     appId: "1:451050923808:web:8271809979968b2a1f9945"
   };
-
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
-
 // 2. СИНХРОНІЗАЦІЯ В РЕАЛЬНОМУ ЧАСІ (Акції та Відгуки)
 function syncSiteData() {
     // Слухаємо зміни в Акціях
@@ -26,7 +24,6 @@ function syncSiteData() {
             if (promoBtn) promoBtn.innerText = "Промокод: " + promoData.code;
         }
     });
-
     // Слухаємо зміни у Відгуках
     db.ref('reviews').on('value', (snapshot) => {
         const reviewsData = snapshot.val();
@@ -34,8 +31,7 @@ function syncSiteData() {
         if (reviewsData && reviewsContainer) {
             reviewsContainer.innerHTML = ''; 
             // Перетворюємо дані з бази у зручний список
-            const reviewsArray = Object.values(reviewsData).reverse(); 
-            
+            const reviewsArray = Object.values(reviewsData).reverse();      
             reviewsArray.forEach(rev => {
                 const div = document.createElement('div');
                 div.className = 'review-card';
@@ -49,30 +45,24 @@ function syncSiteData() {
         }
     });
 }
-
 // 3. ПЕРЕВІРКА СТАТУСУ (Звертається до хмари)
 function checkStatus() {
     const inputEl = document.getElementById("orderInput");
     const resultArea = document.getElementById("result-area");
     if (!inputEl || !resultArea) return;
-
     const input = inputEl.value.trim();
     if (!input) return alert("Введіть номер квитанції!");
-
     resultArea.style.display = "block";
-
     // Шукаємо замовлення в базі Firebase
     db.ref('orders/' + input).once('value').then((snapshot) => {
         if (snapshot.exists()) {
             const order = snapshot.val();
             const badge = document.getElementById("status-badge");
             badge.innerText = order.status;
-            badge.className = "status-badge st-" + order.type;
-            
+            badge.className = "status-badge st-" + order.type;   
             document.getElementById("device-name").innerText = order.device;
             document.getElementById("price-val").innerText = order.price || "—";
             document.getElementById("master-note").innerText = order.note || "Немає коментарів";
-
             const colors = { done: "var(--success)", work: "var(--accent)", wait: "var(--danger)" };
             resultArea.style.borderLeft = `5px solid ${colors[order.type]}`;
         } else {
@@ -85,7 +75,6 @@ function checkStatus() {
         }
     });
 }
-
 // Навігація та Тема (Без змін)
 function navigateTo(targetId) {
     const homeContent = document.getElementById('home-content');
@@ -104,7 +93,6 @@ function navigateTo(targetId) {
     }
 }
 function handleEnter(e) { if (e.key === 'Enter') checkStatus(); }
-
 function initTheme() {
     const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
     const currentTheme = localStorage.getItem('theme');
@@ -120,7 +108,6 @@ function initTheme() {
         });
     }
 }
-
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     syncSiteData();
