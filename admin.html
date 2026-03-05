@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TechFix | Адмін-панель</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <link rel="icon" type="image/png" href="logo.webp" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #f8fafc;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Екран входу */
+        #login-screen {
+            max-width: 350px;
+            margin: 100px auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        #admin-panel {
+            display: none;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 12px;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .active {
+            display: block;
+        }
+
+        /* Форми */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        /* Кнопки */
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            padding: 12px 25px;
+            width: 100%;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+            padding: 12px 25px;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-edit {
+            background: var(--accent);
+            color: white;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            margin-left: 5px;
+        }
+
+        .btn-del {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Таблиця з адаптацією (гортання вбік) */
+        .table-container {
+            width: 100%;
+            overflow-x: auto; /* Дозволяє скролити таблицю на телефоні */
+            margin-top: 20px;
+            background: #1a2234;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* Мінімальна ширина, щоб не злипалося */
+        }
+
+        th {
+            background: #334155;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #334155;
+            font-size: 15px;
+        }
+
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* Дозволяє вкладкам переноситися на нові рядки */
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            background: var(--card);
+            color: white;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        .tab-btn.active-tab {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* --- АДАПТИВНІСТЬ ДЛЯ МОБІЛЬНИХ (Екрани менше 768px) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 15px;
+            }
+
+            .tab-btn {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            /* Робимо поля вводу в один стовпчик */
+            .input-group {
+                grid-column: span 1 !important;
+            }
+            
+            #orders .grid-container {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Блок відгуків на мобільному */
+            .review-item {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+            
+            .review-actions {
+                margin-top: 10px;
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-screen">
+        <h2>🔑 Вхід в TechFix</h2>
+        <input type="email" id="admin-email" placeholder="Email адміна" style="margin-bottom:15px">
+        <input type="password" id="pass" placeholder="Пароль">
+        <button class="btn-main" onclick="login()" style="margin-top:20px">Увійти</button>
+    </div>
+
+    <div id="admin-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h1 style="margin: 0;">🛠️ Панель керування</h1>
+            <button onclick="logout()" style="background: var(--danger); color: white; padding: 10px 20px;">Вийти</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active-tab" onclick="showTab('orders', this)">📦 Замовлення</button>
+            <button class="tab-btn" onclick="showTab('promo', this)">🎁 Акції</button>
+            <button class="tab-btn" onclick="showTab('reviews', this)">💬 Відгуки</button>
+        </div>
+
+        <div id="orders" class="content-section active">
+            <h3>Додати / Редагувати замовлення</h3>
+            <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="input-group">
+                    <label>№ Квитанції</label>
+                    <input type="text" id="order-id">
+                </div>
+                <div class="input-group">
+                    <label>Пристрій</label>
+                    <input type="text" id="order-device">
+                </div>
+                <div class="input-group">
+                    <label>Вартість (грн)</label>
+                    <input type="text" id="order-price">
+                </div>
+                <div class="input-group">
+                    <label>Статус</label>
+                    <select id="order-status">
+                        <option value="wait">Очікує</option>
+                        <option value="work">В роботі</option>
+                        <option value="done">Готово</option>
+                    </select>
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Коментар майстра</label>
+                    <input type="text" id="order-note">
+                </div>
+            </div>
+            <button class="btn-save" style="margin-top: 10px; width: 100%;" onclick="saveOrder()">Зберегти замовлення</button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>№ ID</th>
+                            <th>Пристрій</th>
+                            <th>Ціна</th>
+                            <th>Статус</th>
+                            <th style="text-align:right">Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="promo" class="content-section">
+            <h3>Налаштування акції</h3>
+            <label>Текст акції на головній:</label>
+            <textarea id="promo-text" rows="4"></textarea>
+            <label style="margin-top:15px">Промокод:</label>
+            <input type="text" id="promo-code">
+            <button class="btn-save" style="margin-top:20px; width: 100%;" onclick="savePromo()">Оновити акцію</button>
+        </div>
+
+        <div id="reviews" class="content-section">
+            <h3>Додати новий відгук (від імені адміна)</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label>Ім'я клієнта</label>
+                    <input type="text" id="rev-name">
+                </div>
+                <div style="flex: 2; min-width: 200px;">
+                    <label>Текст відгуку</label>
+                    <input type="text" id="rev-text">
+                </div>
+            </div>
+            <button class="btn-save" style="margin-top:20px; width: 100%;" onclick="addReview()">Опублікувати відгук</button>
+
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #334155;">
+
+            <h3>💬 Модерація відгуків</h3>
+            <div id="reviews-list" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDI0MJrR_BNuvVWR8Imz4orlymbVKXkqF0",
+            authDomain: "techfix-base.firebaseapp.com",
+            databaseURL: "https://techfix-base-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "techfix-base",
+            storageBucket: "techfix-base.firebasestorage.app",
+            messagingSenderId: "451050923808",
+            appId: "1:451050923808:web:8271809979968b2a1f9945"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        function login() {
+            const email = document.getElementById("admin-email").value;
+            const pass = document.getElementById("pass").value;
+            auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Помилка: " + e.message));
+        }
+
+        function logout() {
+            auth.signOut().then(() => location.reload());
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("admin-panel").style.display = "block";
+                loadData();
+            }
+        });
+
+        function showTab(id, btn) {
+            document.querySelectorAll(".content-section").forEach(s => s.classList.remove("active"));
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active-tab"));
+            document.getElementById(id).classList.add("active");
+            btn.classList.add("active-tab");
+        }
+
+        function saveOrder() {
+            const id = document.getElementById("order-id").value;
+            if (!id) return alert("Введіть номер!");
+            const sel = document.getElementById("order-status");
+            db.ref("orders/" + id).set({
+                device: document.getElementById("order-device").value,
+                price: document.getElementById("order-price").value,
+                type: sel.value,
+                status: sel.options[sel.selectedIndex].text,
+                note: document.getElementById("order-note").value
+            });
+            alert("Збережено!");
+        }
+
+        function editOrder(id) {
+            db.ref("orders/" + id).once("value").then(s => {
+                const o = s.val();
+                document.getElementById("order-id").value = id;
+                document.getElementById("order-device").value = o.device;
+                document.getElementById("order-price").value = o.price;
+                document.getElementById("order-status").value = o.type;
+                document.getElementById("order-note").value = o.note;
+            });
+            // Скрол вгору до форми на мобільному
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function savePromo() {
+            db.ref("promo").set({
+                text: document.getElementById("promo-text").value,
+                code: document.getElementById("promo-code").value
+            });
+            alert("Акцію оновлено!");
+        }
+
+        function addReview() {
+            const name = document.getElementById("rev-name").value;
+            const text = document.getElementById("rev-text").value;
+            if (name && text) {
+                db.ref("reviews").push({
+                    name: name,
+                    text: text,
+                    date: new Date().toLocaleDateString(),
+                    approved: true
+                });
+                document.getElementById("rev-name").value = "";
+                document.getElementById("rev-text").value = "";
+            } else {
+                alert("Заповніть ім'я та текст відгуку!");
+            }
+        }
+
+        function deleteReview(reviewId) {
+            if (confirm("Ти точно хочеш назавжди видалити цей відгук?")) {
+                db.ref("reviews/" + reviewId).remove()
+                    .catch((error) => alert("Помилка при видаленні: " + error.message));
+            }
+        }
+
+        function approveReview(reviewId) {
+            db.ref("reviews/" + reviewId).update({
+                approved: true
+            }).catch((error) => alert("Помилка при схваленні: " + error.message));
+        }
+
+        function loadData() {
+            // Замовлення
+            db.ref("orders").on("value", snap => {
+                const tbody = document.getElementById("orders-tbody");
+                tbody.innerHTML = "";
+                const orders = snap.val() || {};
+                for (let id in orders) {
+                    tbody.innerHTML += `<tr>
+                        <td><b>${id}</b></td>
+                        <td>${orders[id].device}</td>
+                        <td style="white-space: nowrap;">${orders[id].price} грн</td>
+                        <td>${orders[id].status}</td>
+                        <td style="text-align:right; white-space: nowrap;">
+                            <button class="action-btn btn-edit" onclick="editOrder('${id}')">✏️</button>
+                            <button class="action-btn btn-del" style="width: 36px; height: 36px; margin-left: 5px; font-size: 18px;" onclick="if(confirm('Видалити замовлення?')) db.ref('orders/${id}').remove()">🗑️</button>
+                        </td>
+                    </tr>`;
+                }
+            });
+
+            // Відгуки
+            db.ref("reviews").on("value", snap => {
+                const list = document.getElementById("reviews-list");
+                if (!list) return;
+                list.innerHTML = "";
+
+                const revs = snap.val() || {};
+                const revsArray = Object.keys(revs).map(key => ({ id: key, ...revs[key] })).reverse();
+
+                if (revsArray.length === 0) {
+                    list.innerHTML = "<p style='color: #888;'>Відгуків поки немає.</p>";
+                    return;
+                }
+
+                revsArray.forEach(rev => {
+                    const dateStr = rev.date ? `<small style="color: #888; display: inline-block; margin-top: 5px;">${rev.date}</small>` : "";
+
+                    const statusBadge = rev.approved
+                        ? `<span style="color: var(--success); font-size: 0.8em; border: 1px solid var(--success); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">✅ Опубліковано</span>`
+                        : `<span style="color: var(--warning); font-size: 0.8em; border: 1px solid var(--warning); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">⏳ Очікує перевірки</span>`;
+
+                    const approveBtn = !rev.approved
+                        ? `<button class="action-btn" onclick="approveReview('${rev.id}')" style="background: var(--success); color: white; padding: 8px 15px; width: auto; font-size: 14px; margin-right: 5px;">✅ Схвалити</button>`
+                        : '';
+
+                    list.innerHTML += `
+                    <div class="review-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:var(--bg); padding:15px; border-radius:8px; border-left: 4px solid ${rev.approved ? 'var(--success)' : 'var(--warning)'};">
+                        <div style="flex-grow: 1; margin-right: 15px;">
+                            <strong style="color: var(--text); font-size: 1.1em;">${rev.name}</strong><br>
+                            ${dateStr} ${statusBadge}
+                            <p style="margin: 10px 0 0 0; color: #ccc;">${rev.text}</p>
+                        </div>
+                        <div class="review-actions" style="display: flex; gap: 5px;">
+                            ${approveBtn}
+                            <button class="action-btn btn-del" onclick="deleteReview('${rev.id}')" style="padding: 8px 15px; width: auto; font-size: 14px;">🗑️ Видалити</button>
+                        </div>
+                    </div>`;
+                });
+            });
+
+            // Акції
+            db.ref("promo").on("value", s => {
+                if (s.val()) {
+                    document.getElementById("promo-text").value = s.val().text;
+                    document.getElementById("promo-code").value = s.val().code;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
